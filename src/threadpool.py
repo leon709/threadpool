@@ -157,6 +157,7 @@ class WorkerThread(threading.Thread):
                 try:
                     result = request.callable(*request.args, **request.kwds)
                     self._results_queue.put((request, result))
+                    request.set_result(result)
                 except:
                     request.exception = True
                     self._results_queue.put((request, sys.exc_info()))
@@ -215,10 +216,18 @@ class WorkRequest:
         self.callable = callable_
         self.args = args or []
         self.kwds = kwds or {}
+        self.req_result = None
 
     def __str__(self):
-        return "<WorkRequest id=%s args=%r kwargs=%r exception=%s>" % \
-            (self.requestID, self.args, self.kwds, self.exception)
+        return "<WorkRequest id=%s args=%r kwargs=%r exception=%s result=%s>" % \
+            (self.requestID, self.args, self.kwds, self.exception, self.req_result)
+            
+    def set_result(self, result):
+        self.req_result = result
+    
+    def get_result(self):
+        return self.req_result
+
 
 class ThreadPool:
     """A thread pool, distributing work requests and collecting results.
